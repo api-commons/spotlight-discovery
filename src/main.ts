@@ -119,8 +119,9 @@ $('#save-local').addEventListener('click', () => {
 async function gitSave(kind: 'commit' | 'pr') {
   const cfg = loadConfig();
   if (!cfg.githubToken) return status('Add a GitHub token in Config.', false);
-  const repo = cfg.defaultRepo || provenance.repo;
-  if (!repo || !repo.includes('/')) return status('Set a GitHub default repo (owner/repo) in Config.', false);
+  // Only reuse the provenance repo when it's a GitHub repo; otherwise require the default.
+  const repo = cfg.defaultRepo || (provenance.source === 'github' ? provenance.repo : undefined);
+  if (!repo || !repo.includes('/') || /^\d+$/.test(repo)) return status('Set a GitHub default repo (owner/repo) in Config.', false);
   const defaultPath = provenance.path || `${($<HTMLInputElement>('#art-name').value.trim() || 'artifact').replace(/[^a-z0-9._-]+/gi, '-')}.${lang}`;
   const path = window.prompt('File path in the repo:', defaultPath);
   if (!path) return;
