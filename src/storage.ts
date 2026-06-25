@@ -5,6 +5,7 @@ export interface Provenance {
   repo?: string; // owner/repo (or workspace/repo)
   path?: string; // file path in the repo
   ref?: string; // branch/ref
+  aid?: string; // APIs.io artifact id
 }
 export interface SavedArtifact {
   id: string;
@@ -26,6 +27,7 @@ export interface Config {
   bitbucketToken?: string;
   defaultRepo?: string; // owner/repo for GitHub saves
   defaultBranch?: string;
+  sources?: Record<string, boolean>; // search source toggles (apis.io/github/gitlab/bitbucket)
 }
 
 const read = <T>(k: string, fallback: T): T => {

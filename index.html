@@ -25,12 +25,8 @@
     <main class="layout">
       <section class="pane">
         <div class="toolbar">
-          <select id="source" class="src-select" aria-label="Search source">
-            <option value="apis.io">APIs.io</option>
-            <option value="github">GitHub</option>
-            <option value="gitlab">GitLab</option>
-            <option value="bitbucket">Bitbucket</option>
-          </select>
+          <select id="artifact-type" class="src-select" aria-label="Artifact type"></select>
+          <select id="source" class="src-select" aria-label="Search source" title="Where to search (toggle sources in Config)"></select>
           <div class="search-wrap">
             <input id="q" type="search" placeholder="Search artifacts…" autocomplete="off" />
             <button id="search" title="Search">Search</button>
@@ -64,6 +60,16 @@
         <div class="tab-panel" id="tab-config" hidden>
           <p class="notice">Tokens are stored <strong>only in this browser's local storage</strong> (cleared with your cache). They're used directly from your browser to the provider APIs — nothing passes through a server.</p>
           <div class="config-scroll">
+            <details class="cfg-group" open>
+              <summary>Search sources</summary>
+              <div class="cfg-fields">
+                <p class="src-note">Which sources Search looks in. APIs.io &amp; GitHub are on by default; GitLab &amp; Bitbucket need their tokens below.</p>
+                <label class="src-toggle"><input type="checkbox" id="src-apis.io" checked disabled> APIs.io <span class="src-hint">(always on)</span></label>
+                <label class="src-toggle"><input type="checkbox" id="src-github" checked> GitHub</label>
+                <label class="src-toggle"><input type="checkbox" id="src-gitlab"> GitLab</label>
+                <label class="src-toggle"><input type="checkbox" id="src-bitbucket"> Bitbucket</label>
+              </div>
+            </details>
             <details class="cfg-group" open>
               <summary>GitHub</summary>
               <div class="cfg-fields">

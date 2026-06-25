@@ -6,10 +6,9 @@ import {
   loadArtifacts, upsertArtifact, removeArtifact, getArtifact, loadConfig, saveConfig, newId,
   type SavedArtifact, type Provenance, type Config,
 } from './storage';
-import {
-  searchApisIo, loadApisIo, searchGitHub, readGitHub, commitGitHub, openPrGitHub,
-  searchGitLab, readGitLab, searchBitbucket, readBitbucket, type SearchHit,
-} from './providers';
+import { commitGitHub, openPrGitHub } from './providers';
+import { ARTIFACTS, artifactById, type ArtifactType } from './artifacts';
+import { searchSource, loadHit, enabledSources, type Hit, type SourceId, type Tokens } from './sources';
 import './style.css';
 
 self.MonacoEnvironment = { getWorker: (_id, label) => (label === 'json' ? new JsonWorker() : new EditorWorker()) };
@@ -52,43 +51,59 @@ function setLang(l: 'yaml' | 'json') {
   $('#lang-json').classList.toggle('active', l === 'json');
 }
 
+// ---- artifact type + source selectors ---------------------------------------
+const typeSelect = $<HTMLSelectElement>('#artifact-type');
+typeSelect.innerHTML = ARTIFACTS.map((a) => `<option value="${a.id}">${a.label}</option>`).join('');
+typeSelect.value = 'openapi';
+let currentArtifact: ArtifactType = artifactById('openapi');
+typeSelect.addEventListener('change', () => { currentArtifact = artifactById(typeSelect.value); });
+
+const sourceSelect = $<HTMLSelectElement>('#source');
+let currentSource: SourceId = 'apis.io';
+function populateSources() {
+  const enabled = enabledSources(loadConfig().sources);
+  sourceSelect.innerHTML = enabled.map((s) => `<option value="${s.id}">${s.label}</option>`).join('');
+  if (!enabled.some((s) => s.id === currentSource)) currentSource = 'apis.io';
+  sourceSelect.value = currentSource;
+}
+populateSources();
+sourceSelect.addEventListener('change', () => { currentSource = sourceSelect.value as SourceId; });
+function gitTokens(): Tokens {
+  const c = loadConfig();
+  return { github: c.githubToken, gitlab: c.gitlabToken, bitbucketUser: c.bitbucketUser, bitbucket: c.bitbucketToken };
+}
+
 // ---- search -----------------------------------------------------------------
 const results = $('#results');
 const qInput = $<HTMLInputElement>('#q');
 const hideResults = () => { results.hidden = true; results.innerHTML = ''; };
 const msg = (t: string) => { results.innerHTML = `<div class="hit-msg">${esc(t)}</div>`; results.hidden = false; };
-let lastHits: SearchHit[] = [];
+let lastHits: Hit[] = [];
 
 async function runSearch() {
-  const source = $<HTMLSelectElement>('#source').value;
   const q = qInput.value.trim();
-  msg(`Searching ${source}…`);
+  const srcLabel = sourceSelect.options[sourceSelect.selectedIndex]?.textContent || currentSource;
+  msg(`Searching ${srcLabel} for ${currentArtifact.label}…`);
   try {
-    const cfg = loadConfig();
-    if (source === 'apis.io') lastHits = await searchApisIo(q);
-    else if (source === 'github') lastHits = await searchGitHub(q, cfg);
-    else if (source === 'gitlab') lastHits = await searchGitLab(q, cfg);
-    else { const ws = (cfg.bitbucketUser || '').trim(); lastHits = await searchBitbucket(q, ws, cfg); }
-    if (!lastHits.length) { msg('No results.'); return; }
+    lastHits = await searchSource(currentSource, currentArtifact, q, gitTokens());
+    if (!lastHits.length) { msg(currentArtifact.searchNote || `No ${currentArtifact.label} results on ${srcLabel}.`); return; }
     results.innerHTML = lastHits.map((h, i) => `<div class="hit" data-i="${i}">
       <span class="hit-name">${esc(h.name)}</span>
-      <span class="hit-sub">${esc(h.repo || h.type || h.provider)}${h.path ? ` · ${esc(h.path)}` : ''}</span>
+      <span class="hit-sub">${esc(h.repo || h.type || h.source)}${h.path ? ` · ${esc(h.path)}` : ''}</span>
     </div>`).join('');
     results.hidden = false;
     results.querySelectorAll<HTMLElement>('.hit').forEach((el) => el.addEventListener('click', () => selectHit(lastHits[Number(el.dataset.i)])));
   } catch (e) {
-    msg(`${source} search failed: ${e instanceof Error ? e.message : String(e)}`);
+    msg(`${srcLabel} search failed: ${e instanceof Error ? e.message : String(e)}`);
   }
 }
-async function selectHit(h: SearchHit) {
+async function selectHit(h: Hit) {
   msg(`Loading ${h.name}…`);
   try {
-    const cfg = loadConfig();
-    let content = '';
-    if (h.provider === 'apis.io') { content = await loadApisIo(h); provenance = { source: 'apis.io', url: h.url, aid: h.aid } as any; }
-    else if (h.provider === 'github') { content = (await readGitHub(h.repo!, h.path!, h.ref, cfg)).content; provenance = { source: 'github', repo: h.repo, path: h.path, ref: h.ref, url: h.url }; }
-    else if (h.provider === 'gitlab') { content = (await readGitLab(h.repo!, h.path!, h.ref, cfg)).content; provenance = { source: 'gitlab', repo: h.repo, path: h.path, ref: h.ref }; }
-    else { content = (await readBitbucket(h.repo!, h.path!, h.ref, cfg)).content; provenance = { source: 'bitbucket', repo: h.repo, path: h.path, ref: h.ref }; }
+    const content = await loadHit(h, gitTokens());
+    provenance = h.source === 'apis.io'
+      ? { source: 'apis.io', url: h.url, aid: h.aid } as Provenance
+      : { source: h.source, repo: h.repo, path: h.path, ref: h.ref, url: h.url };
     activeId = null;
     $<HTMLInputElement>('#art-name').value = h.name;
     setContent(content);
@@ -202,6 +217,17 @@ const CFG_MAP: Array<[string, keyof Config]> = [
     el.addEventListener('input', () => {
       clearTimeout(t);
       t = window.setTimeout(() => { const c = loadConfig(); const v = el.value.trim(); if (v) (c[key] as string) = v; else delete c[key]; saveConfig(c); }, 300);
+    });
+  }
+  // Search-source toggles — persist to cfg.sources and re-populate the source dropdown.
+  for (const id of ['github', 'gitlab', 'bitbucket'] as const) {
+    const el = $<HTMLInputElement>('#src-' + id);
+    el.checked = (cfg.sources?.[id]) ?? (id === 'github');
+    el.addEventListener('change', () => {
+      const c = loadConfig();
+      c.sources = { ...(c.sources || {}), [id]: el.checked };
+      saveConfig(c);
+      populateSources();
     });
   }
   $<HTMLInputElement>('#cfg-show').addEventListener('change', (e) => {

@@ -1,0 +1,17 @@
+// Artifact types — shared vocabulary with spotlight-validator. Each maps to an
+// APIs.io endpoint (and a GitHub search qualifier lives in sources.ts by id).
+export interface ArtifactType { id: string; label: string; endpoint: string; format: string; searchNote?: string }
+export const ARTIFACTS: ArtifactType[] = [
+  { id: 'apis-json', label: 'APIs.json', endpoint: 'apis-json', format: 'apis-json', searchNote: 'APIs.json artifacts will appear here as the APIs.io catalog indexes them.' },
+  { id: 'openapi', label: 'OpenAPI', endpoint: 'openapis', format: 'openapi' },
+  { id: 'mcp', label: 'MCP', endpoint: 'mcp', format: 'mcp', searchNote: 'MCP artifacts will appear here as the APIs.io catalog indexes them.' },
+  { id: 'arazzo', label: 'Arazzo', endpoint: 'arazzo', format: 'arazzo', searchNote: 'No Arazzo artifacts in the APIs.io catalog yet.' },
+  { id: 'asyncapi', label: 'AsyncAPI', endpoint: 'asyncapis', format: 'asyncapi' },
+  { id: 'json-schema', label: 'JSON Schema', endpoint: 'json-schemas', format: 'jsonschema' },
+  { id: 'json-structure', label: 'JSON Structure', endpoint: 'json-structures', format: 'json-structure' },
+  { id: 'json-ld', label: 'JSON-LD', endpoint: 'json-ld', format: 'json-ld' },
+  { id: 'plans', label: 'Plans', endpoint: 'plans', format: 'plans' },
+  { id: 'rate-limits', label: 'Rate Limits', endpoint: 'rate-limits', format: 'rate-limits' },
+  { id: 'finops', label: 'FinOps', endpoint: 'finops', format: 'finops' },
+];
+export const artifactById = (id: string) => ARTIFACTS.find((a) => a.id === id) || ARTIFACTS[1];
