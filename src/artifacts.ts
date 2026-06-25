@@ -13,6 +13,6 @@ export const ARTIFACTS: ArtifactType[] = [
   { id: 'plans', label: 'Plans', endpoint: 'plans', format: 'plans' },
   { id: 'rate-limits', label: 'Rate Limits', endpoint: 'rate-limits', format: 'rate-limits' },
   { id: 'finops', label: 'FinOps', endpoint: 'finops', format: 'finops' },
-  { id: 'agent-skill', label: 'Agent Skill', endpoint: 'skills', format: 'agent-skill', searchNote: 'Agent skills (SKILL.md) live in code — search GitHub. APIs.io does not index them yet.' },
+  { id: 'agent-skill', label: 'Agent Skill', endpoint: 'skills', format: 'agent-skill', searchNote: 'Agent skills (SKILL.md) — search GitHub, or APIs.io as it indexes them.' },
 ];
 export const artifactById = (id: string) => ARTIFACTS.find((a) => a.id === id) || ARTIFACTS[1];
