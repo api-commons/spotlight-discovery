@@ -1,0 +1,11 @@
+{
+  "name": "spotlight-discovery",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A browser-first registry for API artifacts — search APIs.io + GitHub/GitLab/Bitbucket, keep provenance, save locally or commit/PR to git, and edit.",
+  "scripts": { "dev": "vite", "build": "vite build", "preview": "vite preview" },
+  "license": "Apache-2.0",
+  "devDependencies": { "typescript": "^5.7.2", "vite": "^5.4.11" },
+  "dependencies": { "monaco-editor": "^0.52.2", "yaml": "^2.6.1" }
+}

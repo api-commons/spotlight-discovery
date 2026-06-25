@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Spotlight Discovery — API artifact registry</title>
+    <meta name="description" content="Search APIs.io and GitHub/GitLab/Bitbucket for API artifacts, keep provenance, save locally or commit/PR to git, and edit — in the browser." />
+    <link rel="icon" href="/spotlight-logo.png" type="image/png" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <img src="/spotlight-logo.png" alt="Spotlight Rules" width="40" height="40" />
+        <strong>Spotlight Discovery</strong>
+        <span class="tag">artifact registry</span>
+      </div>
+      <nav>
+        <a href="https://spotlight-rules.com/spec/" target="_blank" rel="noopener">Rules</a>
+        <a href="https://github.com/api-commons/spotlight-discovery" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://spotlight-rules.com" target="_blank" rel="noopener">Spotlight Rules</a>
+        <a href="https://apievangelist.com" target="_blank" rel="noopener">API Evangelist</a>
+      </nav>
+    </header>
+
+    <main class="layout">
+      <section class="pane">
+        <div class="toolbar">
+          <select id="source" class="src-select" aria-label="Search source">
+            <option value="apis.io">APIs.io</option>
+            <option value="github">GitHub</option>
+            <option value="gitlab">GitLab</option>
+            <option value="bitbucket">Bitbucket</option>
+          </select>
+          <div class="search-wrap">
+            <input id="q" type="search" placeholder="Search artifacts…" autocomplete="off" />
+            <button id="search" title="Search">Search</button>
+            <div id="results" class="results" hidden></div>
+          </div>
+          <div class="lang-toggle" role="group" aria-label="Editor format">
+            <button id="lang-yaml" class="active" type="button">YAML</button>
+            <button id="lang-json" type="button">JSON</button>
+          </div>
+        </div>
+        <div id="provenance" class="prov muted small">No artifact loaded — search a source or start typing.</div>
+        <div id="editor" class="editor"></div>
+        <div class="savebar">
+          <input id="art-name" placeholder="artifact name" autocomplete="off" />
+          <button id="save-local" class="btn-accent" title="Save to this browser">Save locally</button>
+          <button id="commit" title="Commit to GitHub (Config repo)">Commit ↗</button>
+          <button id="pr" title="Open a pull request on GitHub">Open PR ↗</button>
+          <span id="save-status" class="muted small"></span>
+        </div>
+      </section>
+
+      <section class="pane">
+        <div class="tabs">
+          <button class="tab active" data-tab="saved" type="button">Saved <span class="badge" id="saved-count">0</span></button>
+          <button class="tab" data-tab="config" type="button">Config</button>
+        </div>
+        <div class="tab-panel" id="tab-saved">
+          <div class="filterbar"><input id="filter" type="search" placeholder="Filter saved artifacts…" autocomplete="off" /></div>
+          <ul id="saved-list" class="store-list"></ul>
+        </div>
+        <div class="tab-panel" id="tab-config" hidden>
+          <p class="notice">Tokens are stored <strong>only in this browser's local storage</strong> (cleared with your cache). They're used directly from your browser to the provider APIs — nothing passes through a server.</p>
+          <div class="config-scroll">
+            <details class="cfg-group" open>
+              <summary>GitHub</summary>
+              <div class="cfg-fields">
+                <label><span>Personal access token <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">create ↗</a></span><input type="password" id="cfg-gh-token" autocomplete="off" placeholder="ghp_…"></label>
+                <label><span>Default repo (owner/repo)</span><input type="text" id="cfg-gh-repo" autocomplete="off" placeholder="my-org/api-specs"></label>
+                <label><span>Default branch</span><input type="text" id="cfg-gh-branch" autocomplete="off" placeholder="main"></label>
+              </div>
+            </details>
+            <details class="cfg-group">
+              <summary>GitLab</summary>
+              <div class="cfg-fields">
+                <label><span>Token <a href="https://gitlab.com/-/profile/personal_access_tokens" target="_blank" rel="noopener">create ↗</a></span><input type="password" id="cfg-gl-token" autocomplete="off" placeholder="glpat-…"></label>
+              </div>
+            </details>
+            <details class="cfg-group">
+              <summary>Bitbucket</summary>
+              <div class="cfg-fields">
+                <label><span>Username</span><input type="text" id="cfg-bb-user" autocomplete="off"></label>
+                <label><span>App password <a href="https://bitbucket.org/account/settings/app-passwords/" target="_blank" rel="noopener">create ↗</a></span><input type="password" id="cfg-bb-token" autocomplete="off"></label>
+              </div>
+            </details>
+            <label class="cfg-show"><input type="checkbox" id="cfg-show"> Show values</label>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
