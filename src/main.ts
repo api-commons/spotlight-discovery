@@ -7,6 +7,7 @@ import {
   type SavedArtifact, type Provenance, type Config,
 } from './storage';
 import { commitGitHub, openPrGitHub } from './providers';
+import { listAccessibleRepos, loadRepos, addRepo, removeRepo, type Repo } from './repos';
 import { ARTIFACTS, artifactById, type ArtifactType } from './artifacts';
 import { searchSource, loadHit, enabledSources, type Hit, type SourceId, type Tokens } from './sources';
 import './style.css';
@@ -134,13 +135,14 @@ $('#save-local').addEventListener('click', () => {
 async function gitSave(kind: 'commit' | 'pr') {
   const cfg = loadConfig();
   if (!cfg.githubToken) return status('Add a GitHub token in Config.', false);
-  // Only reuse the provenance repo when it's a GitHub repo; otherwise require the default.
-  const repo = cfg.defaultRepo || (provenance.source === 'github' ? provenance.repo : undefined);
-  if (!repo || !repo.includes('/') || /^\d+$/.test(repo)) return status('Set a GitHub default repo (owner/repo) in Config.', false);
+  // Prefer the repo selected in the savebar (from the Repos tab), then the
+  // Config default, then the loaded artifact's GitHub provenance.
+  const repo = $<HTMLSelectElement>('#repo-select').value || cfg.defaultRepo || (provenance.source === 'github' ? provenance.repo : undefined);
+  if (!repo || !repo.includes('/') || /^\d+$/.test(repo)) return status('Pick a repo (Repos tab) or set a default repo in Config.', false);
   const defaultPath = provenance.path || `${($<HTMLInputElement>('#art-name').value.trim() || 'artifact').replace(/[^a-z0-9._-]+/gi, '-')}.${lang}`;
   const path = window.prompt('File path in the repo:', defaultPath);
   if (!path) return;
-  const branch = cfg.defaultBranch || 'main';
+  const branch = loadRepos().find((r) => r.fullName === repo)?.defaultBranch || cfg.defaultBranch || 'main';
   const content = editor.getValue();
   const message = `${kind === 'pr' ? 'Propose' : 'Update'} ${path} via spotlight-discovery`;
   status(kind === 'pr' ? 'Opening PR…' : 'Committing…');
@@ -196,11 +198,68 @@ function renderSaved() {
 }
 $<HTMLInputElement>('#filter').addEventListener('input', renderSaved);
 
+// ---- repos ------------------------------------------------------------------
+let accessibleRepos: Repo[] = [];
+async function loadAccessibleRepos() {
+  const token = loadConfig().githubToken;
+  const picker = $<HTMLSelectElement>('#repo-picker');
+  if (!token) { picker.innerHTML = '<option value="">Add a GitHub token in Config →</option>'; return; }
+  picker.innerHTML = '<option value="">Loading your repos…</option>';
+  try {
+    accessibleRepos = await listAccessibleRepos(token);
+    const saved = new Set(loadRepos().map((r) => r.fullName));
+    const avail = accessibleRepos.filter((r) => !saved.has(r.fullName));
+    picker.innerHTML = avail.length
+      ? avail.map((r) => `<option value="${esc(r.fullName)}">${esc(r.fullName)}${r.private ? ' (private)' : ''}</option>`).join('')
+      : '<option value="">All accessible repos already added</option>';
+  } catch (e) {
+    picker.innerHTML = `<option value="">${esc(e instanceof Error ? e.message : 'Could not load repos')}</option>`;
+  }
+}
+// Fill the savebar repo selector (commit/PR target) from the saved list.
+function populateRepoSelect() {
+  const sel = $<HTMLSelectElement>('#repo-select');
+  const repos = loadRepos();
+  const prev = sel.value;
+  sel.innerHTML = repos.length
+    ? repos.map((r) => `<option value="${esc(r.fullName)}">${esc(r.fullName)}</option>`).join('')
+    : '<option value="">— add repos in the Repos tab —</option>';
+  if (repos.some((r) => r.fullName === prev)) sel.value = prev;
+}
+function renderRepos() {
+  const repos = loadRepos();
+  $('#repos-count').textContent = String(repos.length);
+  const list = $('#repos-list');
+  list.innerHTML = repos.length
+    ? repos.map((r) => `<li data-name="${esc(r.fullName)}">
+        <span class="store-name" title="${esc(r.fullName)}">${esc(r.fullName)}</span>
+        <span class="store-meta">${r.private ? 'private' : 'public'} · ${esc(r.defaultBranch)}</span>
+        <button class="store-del" type="button" title="Remove">&times;</button>
+      </li>`).join('')
+    : '<li class="store-empty">No repos yet — pick one above and Add.</li>';
+  list.querySelectorAll<HTMLLIElement>('li[data-name]').forEach((li) => {
+    li.querySelector<HTMLButtonElement>('.store-del')?.addEventListener('click', () => {
+      removeRepo(li.dataset.name!); renderRepos(); loadAccessibleRepos();
+    });
+  });
+  populateRepoSelect();
+}
+$('#repo-add').addEventListener('click', () => {
+  const full = $<HTMLSelectElement>('#repo-picker').value;
+  if (!full) return;
+  addRepo(accessibleRepos.find((x) => x.fullName === full) ?? { fullName: full, defaultBranch: 'main', private: false });
+  renderRepos();
+  loadAccessibleRepos();
+});
+$('#repo-refresh').addEventListener('click', loadAccessibleRepos);
+
 // ---- tabs + config ----------------------------------------------------------
 function switchTab(name: string) {
   document.querySelectorAll<HTMLButtonElement>('.tab').forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
   ($('#tab-saved') as HTMLElement).hidden = name !== 'saved';
+  ($('#tab-repos') as HTMLElement).hidden = name !== 'repos';
   ($('#tab-config') as HTMLElement).hidden = name !== 'config';
+  if (name === 'repos') { renderRepos(); loadAccessibleRepos(); }
 }
 document.querySelectorAll<HTMLButtonElement>('.tab').forEach((t) => t.addEventListener('click', () => switchTab(t.dataset.tab!)));
 
@@ -238,4 +297,5 @@ const CFG_MAP: Array<[string, keyof Config]> = [
 
 // ---- boot -------------------------------------------------------------------
 renderSaved();
+renderRepos();
 showProvenance();

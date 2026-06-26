@@ -42,8 +42,9 @@
         <div class="savebar">
           <input id="art-name" placeholder="artifact name" autocomplete="off" />
           <button id="save-local" class="btn-accent" title="Save to this browser">Save locally</button>
-          <button id="commit" title="Commit to GitHub (Config repo)">Commit ↗</button>
-          <button id="pr" title="Open a pull request on GitHub">Open PR ↗</button>
+          <select id="repo-select" class="repo-select" title="Repo to commit / open a PR against (manage in the Repos tab)"></select>
+          <button id="commit" title="Commit to the selected GitHub repo">Commit ↗</button>
+          <button id="pr" title="Open a pull request on the selected GitHub repo">Open PR ↗</button>
           <span id="save-status" class="muted small"></span>
         </div>
       </section>
@@ -51,11 +52,21 @@
       <section class="pane">
         <div class="tabs">
           <button class="tab active" data-tab="saved" type="button">Saved <span class="badge" id="saved-count">0</span></button>
+          <button class="tab" data-tab="repos" type="button">Repos <span class="badge" id="repos-count">0</span></button>
           <button class="tab" data-tab="config" type="button">Config</button>
         </div>
         <div class="tab-panel" id="tab-saved">
           <div class="filterbar"><input id="filter" type="search" placeholder="Filter saved artifacts…" autocomplete="off" /></div>
           <ul id="saved-list" class="store-list"></ul>
+        </div>
+        <div class="tab-panel" id="tab-repos" hidden>
+          <p class="notice">Add the GitHub repos you work with — stored in this browser and offered wherever you commit or open a PR. Needs a GitHub token (Config).</p>
+          <div class="repos-add">
+            <select id="repo-picker" aria-label="Accessible repositories"></select>
+            <button id="repo-refresh" type="button" title="Reload your repos from GitHub">↻</button>
+            <button id="repo-add" class="btn-accent" type="button">Add</button>
+          </div>
+          <ul id="repos-list" class="store-list"></ul>
         </div>
         <div class="tab-panel" id="tab-config" hidden>
           <p class="notice">Tokens are stored <strong>only in this browser's local storage</strong> (cleared with your cache). They're used directly from your browser to the provider APIs — nothing passes through a server.</p>

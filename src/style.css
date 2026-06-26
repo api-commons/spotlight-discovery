@@ -80,3 +80,11 @@ code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.85em; }
 .src-toggle { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 3px 0; cursor: pointer; }
 .src-toggle input { margin: 0; }
 .src-hint { color: var(--muted, #9aa0a6); font-size: 11px; }
+
+/* ---- repos tab + commit/PR repo selector ---------------------------------- */
+.repos-add { display: flex; gap: 0.5rem; padding: 0.5rem 0.75rem; align-items: center; }
+.repos-add select { flex: 1 1 auto; min-width: 0; background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 4px 6px; font-size: 0.85rem; }
+.repos-add button { flex: 0 0 auto; }
+#repo-refresh { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; cursor: pointer; }
+#repo-refresh:hover { border-color: var(--accent); }
+.repo-select { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; font-size: 0.8rem; max-width: 190px; }
