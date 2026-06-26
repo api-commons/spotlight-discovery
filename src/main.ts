@@ -8,6 +8,7 @@ import {
 } from './storage';
 import { commitGitHub, openPrGitHub } from './providers';
 import { listAccessibleRepos, loadRepos, addRepo, removeRepo, type Repo } from './repos';
+import { buildApisJson } from './apisjson';
 import { ARTIFACTS, artifactById, type ArtifactType } from './artifacts';
 import { searchSource, loadHit, enabledSources, type Hit, type SourceId, type Tokens } from './sources';
 import './style.css';
@@ -158,6 +159,45 @@ async function gitSave(kind: 'commit' | 'pr') {
 $('#commit').addEventListener('click', () => gitSave('commit'));
 $('#pr').addEventListener('click', () => gitSave('pr'));
 
+// ---- commit / PR a saved artifact to a repo from the Repos tab --------------
+function populateSavedRepoSelect() {
+  const sel = $<HTMLSelectElement>('#saved-repo-select');
+  const repos = loadRepos();
+  const prev = sel.value;
+  sel.innerHTML = repos.length
+    ? repos.map((r) => `<option value="${esc(r.fullName)}">${esc(r.fullName)}</option>`).join('')
+    : '<option value="">— add repos in the Repos tab —</option>';
+  if (repos.some((r) => r.fullName === prev)) sel.value = prev;
+}
+function setSavedGitStatus(html: string, isError = false) {
+  const el = $('#saved-git-status') as HTMLElement;
+  el.innerHTML = html;
+  el.style.color = isError ? '#f14c4c' : 'var(--muted)';
+}
+async function gitSaveArtifact(id: string, kind: 'commit' | 'pr') {
+  const d = getArtifact(id);
+  if (!d) return;
+  const cfg = loadConfig();
+  if (!cfg.githubToken) return setSavedGitStatus('Add a GitHub token in Config.', true);
+  const repo = $<HTMLSelectElement>('#saved-repo-select').value;
+  if (!repo) return setSavedGitStatus('Add a repo in the Repos tab and pick it above.', true);
+  const ext = d.lang === 'json' ? 'json' : 'yaml';
+  const defaultPath = (d.provenance.source === 'github' && d.provenance.path) || `${d.name.replace(/\.(ya?ml|json)$/i, '').replace(/[^a-z0-9._/-]+/gi, '-')}.${ext}`;
+  const path = window.prompt(`File path in ${repo}:`, defaultPath);
+  if (!path) return;
+  const branch = loadRepos().find((r) => r.fullName === repo)?.defaultBranch || cfg.defaultBranch || 'main';
+  const message = `${kind === 'pr' ? 'Propose' : 'Update'} ${path} via spotlight-discovery`;
+  setSavedGitStatus(kind === 'pr' ? 'Opening PR…' : 'Committing…');
+  try {
+    const url = kind === 'pr'
+      ? await openPrGitHub(repo, path, d.content, message, branch, cfg)
+      : await commitGitHub(repo, path, d.content, message, branch, cfg);
+    setSavedGitStatus(`${kind === 'pr' ? 'PR opened' : 'Committed'} ✓ <a href="${esc(url)}" target="_blank" rel="noopener">open ↗</a>`);
+  } catch (e) {
+    setSavedGitStatus(`${kind} failed: ${esc(e instanceof Error ? e.message : String(e))}`, true);
+  }
+}
+
 // ---- saved list -------------------------------------------------------------
 function timeAgo(ts: number) {
   const s = Math.floor((Date.now() - ts) / 1000);
@@ -177,11 +217,16 @@ function renderSaved() {
         <span class="store-name" title="${esc(d.name)}">${esc(d.name)}</span>
         <span class="store-meta">${esc(d.provenance.source)}${d.provenance.repo ? ` · ${esc(d.provenance.repo)}` : ''} · ${timeAgo(d.savedAt)}</span>
         <button class="store-btn" type="button">Load</button>
+        <button class="store-btn git-commit" type="button" title="Commit to the selected repo">Commit ↗</button>
+        <button class="store-btn git-pr" type="button" title="Open a PR on the selected repo">PR ↗</button>
         <button class="store-del" type="button" title="Remove">&times;</button>
       </li>`).join('')
     : '<li class="store-empty">No saved artifacts yet — load one and Save locally.</li>';
+  populateSavedRepoSelect();
   list.querySelectorAll<HTMLLIElement>('li[data-id]').forEach((li) => {
     const id = li.dataset.id!;
+    li.querySelector<HTMLButtonElement>('.git-commit')?.addEventListener('click', (e) => { e.stopPropagation(); gitSaveArtifact(id, 'commit'); });
+    li.querySelector<HTMLButtonElement>('.git-pr')?.addEventListener('click', (e) => { e.stopPropagation(); gitSaveArtifact(id, 'pr'); });
     li.querySelector<HTMLButtonElement>('.store-btn')?.addEventListener('click', () => {
       const d = getArtifact(id); if (!d) return;
       activeId = d.id; lang = d.lang; provenance = d.provenance;
@@ -243,6 +288,7 @@ function renderRepos() {
     });
   });
   populateRepoSelect();
+  populateSavedRepoSelect();
 }
 $('#repo-add').addEventListener('click', () => {
   const full = $<HTMLSelectElement>('#repo-picker').value;
@@ -294,6 +340,23 @@ const CFG_MAP: Array<[string, keyof Config]> = [
     for (const id of ['cfg-gh-token', 'cfg-gl-token', 'cfg-bb-token']) $<HTMLInputElement>('#' + id).type = type;
   });
 })();
+
+// ---- download all saved artifacts as one APIs.json (0.21, YAML) -------------
+function downloadFile(name: string, text: string, mime = 'application/yaml') {
+  const url = URL.createObjectURL(new Blob([text], { type: mime }));
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+$('#download-apisjson').addEventListener('click', () => {
+  const docs = loadArtifacts();
+  if (!docs.length) { window.alert('No saved artifacts to export yet.'); return; }
+  const yaml = buildApisJson('Spotlight Discovery artifacts', docs.map((d) => ({
+    name: d.name, content: d.content, lang: d.lang, type: d.format, url: d.provenance?.url,
+  })));
+  downloadFile('apis.yaml', yaml);
+});
 
 // ---- boot -------------------------------------------------------------------
 renderSaved();

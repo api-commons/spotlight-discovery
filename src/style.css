@@ -88,3 +88,7 @@ code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.85em; }
 #repo-refresh { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 3px 8px; cursor: pointer; }
 #repo-refresh:hover { border-color: var(--accent); }
 .repo-select { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 3px 6px; font-size: 0.8rem; max-width: 190px; }
+
+/* download-as-APIs.json button in the header nav */
+.dl-btn { background: var(--accent); color: #000; border: none; border-radius: 4px; padding: 3px 10px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+.dl-btn:hover { filter: brightness(1.08); }
