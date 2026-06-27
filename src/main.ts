@@ -11,6 +11,7 @@ import { listAccessibleRepos, loadRepos, addRepo, removeRepo, type Repo } from '
 import { buildApisJson } from './apisjson';
 import { ARTIFACTS, artifactById, type ArtifactType } from './artifacts';
 import { searchSource, loadHit, enabledSources, type Hit, type SourceId, type Tokens } from './sources';
+import { initEngage } from './engage';
 import './style.css';
 
 self.MonacoEnvironment = { getWorker: (_id, label) => (label === 'json' ? new JsonWorker() : new EditorWorker()) };
@@ -362,3 +363,12 @@ $('#download-apisjson').addEventListener('click', () => {
 renderSaved();
 renderRepos();
 showProvenance();
+
+// API Evangelist services — an always-present front door. Reads the artifact +
+// source in view at click time so the email starts with real context.
+initEngage(() => {
+  const parts = [`Artifact in view: ${currentArtifact.label}`, `Search source: ${currentSource}`];
+  const saved = loadArtifacts().length;
+  if (saved) parts.push(`Saved artifacts in this session: ${saved}`);
+  return 'Context from Spotlight Discovery:\n- ' + parts.join('\n- ');
+});
