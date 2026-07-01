@@ -1,6 +1,6 @@
 // Assemble all saved artifacts into a single APIs.json 0.21 document (YAML):
 // OpenAPI/AsyncAPI become individual `apis`, everything else becomes `common`
-// properties, and a `rules` entry references the Spotlight governance ruleset.
+// properties, and a `rules` entry references the API Commons governance rulesets.
 // Copied identically into the validator and discovery.
 import { parse, stringify } from 'yaml';
 
@@ -74,6 +74,6 @@ export function buildApisJson(collectionName: string, artifacts: ArtifactInput[]
   };
   if (apis.length) doc.apis = apis;
   if (common.length) doc.common = common;
-  doc.rules = [{ type: 'SpectralRules', name: 'Spotlight Rules', url: 'https://spotlight-rules.com/spec/' }];
+  doc.rules = [{ type: 'SpectralRules', name: 'API Commons Rulesets', url: 'https://apicommons.org/rulesets/' }];
   return stringify(doc);
 }

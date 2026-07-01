@@ -1,11 +1,11 @@
 // Weave API Evangelist governance services into the app. Every action routes to
 // info@apievangelist.com over a mailto link, with the current context pre-filled
 // — so engagement works even in a forked or fully local copy, with no backend.
-// Spotlight is the free, open tooling; API Evangelist sells the expert services
+// API Discovery is free, open tooling; API Evangelist sells the expert services
 // around it, and this is the always-present front door to them.
 const EMAIL = 'info@apievangelist.com';
-const APP = 'Spotlight Discovery';
-const SERVICES_URL = 'https://spotlight-rules.com/services/';
+const APP = 'API Discovery';
+const SERVICES_URL = 'https://apievangelist.com/services/';
 
 interface Service {
   title: string;
@@ -43,15 +43,15 @@ const SERVICES: Service[] = [
     title: 'Governance review',
     blurb: 'Have an API Evangelist expert review an artifact against best practices, OWASP, and your own standards.',
     cta: 'Request a review',
-    subject: 'Spotlight governance review request',
+    subject: 'Governance review request',
     body: (ctx) => `Hi API Evangelist,\n\nI'd like a governance review of an API artifact.\n\n${ctx}\n\nI'll attach or paste the artifact in my reply — what does an engagement look like?\n\nThanks,`,
   },
   {
     title: 'Custom rulesets',
-    blurb: 'We encode your organization’s standards as portable Spotlight rules you can run in CI, the editor, and the browser.',
+    blurb: 'We encode your organization’s standards as portable rules you can run in CI, the editor, and the browser.',
     cta: 'Talk rulesets',
-    subject: 'Spotlight custom ruleset engagement',
-    body: (ctx) => `Hi API Evangelist,\n\nWe’d like custom Spotlight rulesets that encode our API standards.\n\n${ctx}\n\nThanks,`,
+    subject: 'Custom ruleset engagement',
+    body: (ctx) => `Hi API Evangelist,\n\nWe’d like custom rulesets that encode our API standards.\n\n${ctx}\n\nThanks,`,
   },
   {
     title: 'Training & advisory',
@@ -63,7 +63,7 @@ const SERVICES: Service[] = [
 ];
 
 function mailto(s: Service, ctx: string): string {
-  const body = `${s.body(ctx)}\n\n— sent from ${APP} (spotlight-rules.com)`;
+  const body = `${s.body(ctx)}\n\n— sent from ${APP} (discover.apicommons.org)`;
   return `mailto:${EMAIL}?subject=${encodeURIComponent(s.subject)}&body=${encodeURIComponent(body)}`;
 }
 
@@ -81,7 +81,7 @@ export function initEngage(context: () => string): void {
         <button type="button" class="engage-close" aria-label="Close">×</button>
       </div>
       <div class="engage-body">
-        <p class="engage-intro">Spotlight is open and free to run yourself. When you want experts in the loop,
+        <p class="engage-intro">API Discovery is open and free to run yourself. When you want experts in the loop,
           <a href="https://apievangelist.com" target="_blank" rel="noopener">API Evangelist</a> offers governance
           services — every option below opens an email to
           <a id="engage-email" href="mailto:${EMAIL}">${EMAIL}</a> with your current context filled in.</p>

@@ -66,7 +66,7 @@ export async function commitGitHub(repo: string, path: string, content: string, 
 }
 export async function openPrGitHub(repo: string, path: string, content: string, message: string, base: string, cfg: Config): Promise<string> {
   if (!cfg.githubToken) throw new Error('GitHub PAT required (Config).');
-  const head = `spotlight/${path.replace(/[^a-z0-9]+/gi, '-')}-${Date.now().toString(36)}`;
+  const head = `api-discovery/${path.replace(/[^a-z0-9]+/gi, '-')}-${Date.now().toString(36)}`;
   const refRes = await fetch(`${GH}/repos/${repo}/git/ref/heads/${base}`, { headers: ghHeaders(cfg.githubToken) });
   if (!refRes.ok) throw new Error(`GitHub base ref ${refRes.status}`);
   const baseSha = (await refRes.json()).object.sha;
@@ -78,7 +78,7 @@ export async function openPrGitHub(repo: string, path: string, content: string, 
   await commitGitHub(repo, path, content, message, head, cfg);
   const pr = await fetch(`${GH}/repos/${repo}/pulls`, {
     method: 'POST', headers: { ...ghHeaders(cfg.githubToken), 'content-type': 'application/json' },
-    body: JSON.stringify({ title: message, head, base, body: 'Opened by spotlight-discovery.' }),
+    body: JSON.stringify({ title: message, head, base, body: 'Opened by API Discovery.' }),
   });
   if (!pr.ok) throw new Error(`GitHub PR ${pr.status}: ${(await pr.json().catch(() => ({})))?.message || ''}`);
   return (await pr.json()).html_url;

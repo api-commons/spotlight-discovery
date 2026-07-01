@@ -17,8 +17,8 @@ export interface SavedArtifact {
   savedAt: number;
 }
 
-const DOCS = 'spotlight-discovery:artifacts';
-const CFG = 'spotlight-discovery:config';
+const DOCS = 'api-discovery:artifacts';
+const CFG = 'api-discovery:config';
 
 export interface Config {
   githubToken?: string;

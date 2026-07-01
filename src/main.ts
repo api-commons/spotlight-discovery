@@ -146,7 +146,7 @@ async function gitSave(kind: 'commit' | 'pr') {
   if (!path) return;
   const branch = loadRepos().find((r) => r.fullName === repo)?.defaultBranch || cfg.defaultBranch || 'main';
   const content = editor.getValue();
-  const message = `${kind === 'pr' ? 'Propose' : 'Update'} ${path} via spotlight-discovery`;
+  const message = `${kind === 'pr' ? 'Propose' : 'Update'} ${path} via API Discovery`;
   status(kind === 'pr' ? 'Opening PR…' : 'Committing…');
   try {
     const url = kind === 'pr' ? await openPrGitHub(repo, path, content, message, branch, cfg) : await commitGitHub(repo, path, content, message, branch, cfg);
@@ -187,7 +187,7 @@ async function gitSaveArtifact(id: string, kind: 'commit' | 'pr') {
   const path = window.prompt(`File path in ${repo}:`, defaultPath);
   if (!path) return;
   const branch = loadRepos().find((r) => r.fullName === repo)?.defaultBranch || cfg.defaultBranch || 'main';
-  const message = `${kind === 'pr' ? 'Propose' : 'Update'} ${path} via spotlight-discovery`;
+  const message = `${kind === 'pr' ? 'Propose' : 'Update'} ${path} via API Discovery`;
   setSavedGitStatus(kind === 'pr' ? 'Opening PR…' : 'Committing…');
   try {
     const url = kind === 'pr'
@@ -353,7 +353,7 @@ function downloadFile(name: string, text: string, mime = 'application/yaml') {
 $('#download-apisjson').addEventListener('click', () => {
   const docs = loadArtifacts();
   if (!docs.length) { window.alert('No saved artifacts to export yet.'); return; }
-  const yaml = buildApisJson('Spotlight Discovery artifacts', docs.map((d) => ({
+  const yaml = buildApisJson('API Discovery artifacts', docs.map((d) => ({
     name: d.name, content: d.content, lang: d.lang, type: d.format, url: d.provenance?.url,
   })));
   downloadFile('apis.yaml', yaml);
@@ -370,5 +370,5 @@ initEngage(() => {
   const parts = [`Artifact in view: ${currentArtifact.label}`, `Search source: ${currentSource}`];
   const saved = loadArtifacts().length;
   if (saved) parts.push(`Saved artifacts in this session: ${saved}`);
-  return 'Context from Spotlight Discovery:\n- ' + parts.join('\n- ');
+  return 'Context from API Discovery:\n- ' + parts.join('\n- ');
 });

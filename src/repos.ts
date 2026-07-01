@@ -25,7 +25,7 @@ export async function listAccessibleRepos(token: string, maxPages = 4): Promise<
   return out;
 }
 
-const KEY = 'spotlight:repos';
+const KEY = 'api-discovery:repos';
 export function loadRepos(): Repo[] {
   try { const v = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; }
 }
